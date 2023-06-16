@@ -1,6 +1,6 @@
 const Users = require('../models/users');
-const dotenv = require('dotenv');
 var jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
 dotenv.config();
 
 const listEmployees = async (req, res) => {
@@ -56,50 +56,41 @@ const listEmployees = async (req, res) => {
 const profileUser = async (req, res) => {
     let token;
 
-    if (req.headers.authorization) {
-        token = req.headers.authorization.split(' ')[1];
-    } else {
+    if (!req.headers.authorization) {
         res.status(401).json({
             success: false,
             message: "Error! Token was not provided.",
             data: null,
         });
-    }
+    } else {
+        token = req.headers.authorization.split(' ')[1];
 
-
-    if (token) {
         jwt.verify(token, process.env.SECRET_TOKEN, async function (error, dataToken) {
             if (error) {
                 res.status(500).json({
                     success: false,
-                    message: error,
+                    message: 'jwt : ' + error,
                     data: null,
                 });
+            } else {
+                try {
+                    const projection = { _id: 0, password: 0, isAdmin: 0, __v: 0, created_at: 0, updated_at: 0 };
+                    const user = await Users.findOne({ token: dataToken.userid }, projection);
+                    res.status(200).json({
+                        success: true,
+                        message: "Success Get Profile",
+                        data: user,
+                    });
+                } catch (error) {
+                    res.status(500).json({
+                        success: false,
+                        message: 'server : ' + error,
+                        data: null,
+                    });
+                }
             }
-            try {
-                const projection = { _id: 0, password: 0, isAdmin: 0, __v: 0, created_at: 0, updated_at: 0 };
-                const user = await Users.findOne({ token: dataToken.userid }, projection);
-                res.status(200).json({
-                    success: true,
-                    message: "Success Get Profile",
-                    data: user,
-                });
-            } catch (error) {
-                res.status(500).json({
-                    success: false,
-                    message: error,
-                    data: null,
-                });
-            }
-        });
-    } else {
-        res.status(401).json({
-            success: false,
-            message: "Error! Token was not provided.",
-            data: null,
         });
     }
-
 }
 
 const detailUser = async (req, res) => {
@@ -131,30 +122,29 @@ const detailUser = async (req, res) => {
 }
 
 const updateUser = async (req, res) => {
-    let { id, name, email, handpone, position } = req.body;
+    let { id, name, email, handphone, position } = req.body;
 
     const updateFields = {};
     if (name) updateFields.name = name;
     if (email) updateFields.email = email;
-    if (handpone) updateFields.handpone = handpone;
+    if (handphone) updateFields.handphone = handphone;
     if (position) updateFields.position = position;
 
     try {
-        const projection = { _id: 0, password: 0, isAdmin: 0, __v: 0, created_at: 0, updated_at: 0 };
         const user = await Users.findOneAndUpdate({ token: id }, updateFields, { new: true });
-
         if (!user) {
             return res.status(404).json({
                 success: false,
                 message: 'User not found',
                 data: null,
             });
+        } else {
+            res.status(200).json({
+                success: true,
+                message: "Success Update Data User",
+                data: user, updateFields,
+            });
         }
-        res.status(200).json({
-            success: true,
-            message: "Success Update Data User",
-            data: user,
-        });
     } catch (error) {
         res.status(500).json({
             success: false,

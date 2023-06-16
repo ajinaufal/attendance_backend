@@ -2,16 +2,12 @@ var express = require('express');
 var router = express.Router();
 const attendanceControllers = require('../controllers/attendance_controllers');
 
-router.get('/', function (req, res, next) {
-    attendanceControllers.listAttendances(req, res);
+router.get('/', async function (req, res, next) {
+    await attendanceControllers.listAttendances(req, res);
 });
 
-router.get('/in', function (req, res, next) {
-    attendanceControllers.inAttendances(req, res);
-});
-
-router.get('/out', function (req, res, next) {
-    attendanceControllers.outAttendances(req, res);
+router.get('/in', async function (req, res, next) {
+    await attendanceControllers.inAttendances(req, res);
 });
 
 module.exports = router;

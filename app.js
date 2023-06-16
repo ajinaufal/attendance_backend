@@ -5,13 +5,11 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const port = 4000;
 
-
 var authRouter = require('./routers/auth_routers');
 var userRouter = require('./routers/user_routers');
 var attendanceRouter = require('./routers/attendance_routers');
 
 dotenv.config();
-
 const database = process.env.MONGOLAB_URI;
 mongoose.connect(database, { useUnifiedTopology: true, useNewUrlParser: true })
     .then(() => console.log('Connect to databae'))
@@ -19,10 +17,15 @@ mongoose.connect(database, { useUnifiedTopology: true, useNewUrlParser: true })
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
 app.use(cors());
-app.use('/auth', authRouter);
-app.use('/users', userRouter);
-app.use('/attendance', attendanceRouter);
+var corsOptions = {
+    "origin": "*",
+    "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
+}
+app.use('/users', cors(corsOptions), userRouter);
+app.use('/attendance', cors(corsOptions), attendanceRouter);
+app.use('/auth', cors(corsOptions), authRouter);
 
 app.on('error', (error) => {
     console.error('Server error:', error);

@@ -5,22 +5,21 @@ const AttendanceSchema = new mongoose.Schema({
         required: true,
     },
     inAt: {
-        type: String,
+        type: Date,
 
         nullable: true,
     },
     outAt: {
-        type: String,
-
+        type: Date,
         nullable: true,
     },
     createdAt: {
-        type: String,
+        type: Date,
 
         nullable: true,
     },
     updatedAt: {
-        type: String,
+        type: Date,
 
         nullable: true
     },

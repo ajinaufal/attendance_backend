@@ -6,8 +6,8 @@ router.get('/', function (req, res, next) {
     userControllers.listEmployees(req, res);
 });
 
-router.get('/profile', function (req, res, next) {
-    userControllers.profileUser(req, res);
+router.get('/profile', async function (req, res, next) {
+    await userControllers.profileUser(req, res);
 });
 
 router.post('/detail', function (req, res, next) {
@@ -21,5 +21,6 @@ router.post('/update', function (req, res, next) {
 router.post('/create', function (req, res, next) {
     userControllers.createeUser(req, res);
 });
+
 
 module.exports = router;

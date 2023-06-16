@@ -4,8 +4,6 @@ var jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 dotenv.config();
 
-// new Date(jwt.verify(token, process.env.SECRET_TOKEN).exp * 1000).toLocaleString()
-
 const generate = async (req, res) => {
     try {
         var token = faker.string.uuid();
@@ -34,7 +32,12 @@ const login = async (req, res) => {
     let existingUser;
     let token;
     if (!email) {
-        res.status(401).json();
+        res.status(401).json({
+            success: false,
+            message: "Please try again, the password or email is incorrect.",
+            data: null,
+            token: null,
+        });
     } else {
         try {
             existingUser = await Users.findOne({ email: email });
@@ -71,17 +74,14 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
     let token;
-    if (req.headers.authorization) {
-        token = req.headers.authorization.split(' ')[1];
-    } else {
+    if (!req.headers.authorization) {
         res.status(401).json({
             success: false,
             message: "Error! Token was not provided.",
             data: null,
         });
-    }
-
-    if (token) {
+    } else {
+        token = req.headers.authorization.split(' ')[1];
         jwt.verify(token, process.env.SECRET_TOKEN, async function (error, dataToken) {
             if (error) {
                 res.status(500).json({
@@ -89,19 +89,57 @@ const logout = async (req, res) => {
                     message: error,
                     data: null,
                 });
+            } else {
+                res.status(200).json({
+                    success: true,
+                    message: "Success Logout",
+                    data: null,
+                });
             }
-            res.status(200).json({
-                success: true,
-                message: "Success Logout",
-                data: null,
-            });
-        });
-    } else {
+
+        })
+    }
+}
+
+const changePassword = async (req, res) => {
+    let token;
+    let { password, currentPassword } = req.body;
+
+    if (!req.headers.authorization) {
         res.status(401).json({
             success: false,
             message: "Error! Token was not provided.",
             data: null,
         });
+    } else {
+        token = req.headers.authorization.split(' ')[1];
+        jwt.verify(token, process.env.SECRET_TOKEN, async function (error, dataToken) {
+            if (error) {
+                res.status(500).json({
+                    success: false,
+                    message: error,
+                    data: null,
+                });
+            } else {
+                var user = await Users.findOne({ token: dataToken.userid });
+                if (currentPassword == Buffer.from(user.password, 'base64').toString('utf8')) {
+                    user.password = Buffer.from(password, 'utf8').toString('base64');
+                    await user.save();
+                    res.status(200).json({
+                        success: true,
+                        message: "Success Logout",
+                        data: user,
+                    });
+                } else {
+                    res.status(500).json({
+                        success: false,
+                        message: "Please try again, the password is incorrect.",
+                        data: null,
+                    });
+                }
+            }
+
+        })
     }
 }
 
@@ -109,4 +147,5 @@ module.exports = {
     generate,
     login,
     logout,
+    changePassword,
 };

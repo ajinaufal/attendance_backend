@@ -1,6 +1,6 @@
 const attendances = require('../models/attendance');
-const dotenv = require('dotenv');
 var jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
 dotenv.config();
 
 const listAttendances = async (req, res) => {
@@ -55,23 +55,34 @@ const inAttendances = async (req, res) => {
         if (error) {
             res.status(500).json({
                 success: false,
-                message: 'token',
+                message: "Error! Token was not provided.",
                 data: null,
             });
         }
         try {
-            var newAttendances = new attendances();
-            newAttendances.user_token = dataToken.userid;
-            newAttendances.inAt = Date.now().toString();
-            newAttendances.createdAt = Date.now().toString();
-            await newAttendances.save();
+            const noAbsen = await attendances.findOne({ user_token: dataToken.userid, updatedAt: null });
+            if (!noAbsen) {
+                var newAttendances = new attendances();
+                newAttendances.user_token = dataToken.userid;
+                newAttendances.inAt = new Date();
+                newAttendances.createdAt = new Date();
+                await newAttendances.save();
 
-            res.status(200).json({
-                success: true,
-                message: 'You have successfully attendance.',
-                data: newAttendances,
-            });
-
+                res.status(200).json({
+                    success: true,
+                    message: 'You have successfully attendance.',
+                    data: newAttendances,
+                });
+            } else {
+                noAbsen.outAt = new Date();
+                noAbsen.updatedAt = new Date();
+                await noAbsen.save();
+                res.status(200).json({
+                    success: true,
+                    message: "Success Update Data attendances",
+                    data: noAbsen,
+                });
+            }
         } catch (error) {
             return res.status(500).json({
                 success: false,
@@ -83,44 +94,9 @@ const inAttendances = async (req, res) => {
 
 }
 
-const outAttendances = async (req, res) => {
-    let token;
-    let dataToken;
 
-    if (req.headers.authorization) {
-        token = req.headers.authorization.split(' ')[1];
-    }
-
-    try {
-        if (token) {
-            const projection = { created_at: 0, updated_at: 0 };
-            dataToken = jwt.verify(token, process.env.SECRET_TOKEN);
-            const user = await Users.findOneAndUpdate({ user_token: dataToken.userid, updated_at: null }, { updated_at: Date.now, out_at: Date.now, }, { new: true });
-
-            if (!user) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Data not found',
-                    data: null,
-                });
-            }
-            res.status(200).json({
-                success: true,
-                message: "Success Update Data attendances",
-                data: user,
-            });
-        }
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error,
-            data: null,
-        });
-    }
-}
 
 module.exports = {
     listAttendances,
     inAttendances,
-    outAttendances,
 };

@@ -14,4 +14,7 @@ router.get('/logout', function async(req, res, next) {
     authController.logout(req, res);
 });
 
+router.post('/change_password', function async(req, res, next) {
+    authController.changePassword(req, res);
+});
 module.exports = router;
